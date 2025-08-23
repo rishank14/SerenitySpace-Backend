@@ -13,10 +13,15 @@ const ventSchema = new mongoose.Schema(
          trim: true,
          maxlength: 1000,
       },
-      emotion: {
+      mood: {
          type: String,
          enum: ["sad", "angry", "anxious", "happy", "neutral"],
          default: "neutral",
+      },
+      visibility: {
+         type: String,
+         enum: ["public", "private"],
+         default: "private",
       },
    },
    { timestamps: true }
