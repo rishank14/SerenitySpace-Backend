@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import errorMiddleware from "./middleware/error.middleware.js";
+import errorMiddleware from "./middlewares/error.middleware.js";
 
 const app = express();
 
@@ -23,9 +23,11 @@ app.get("/", (req, res) => {
    res.send("🧠 SerenitySpace backend is live!");
 });
 
+// --- ROUTES IMPORT ---
+import userRouter from './routes/user.routes.js';
+
 // --- ROUTES ---
-app.use("/api/users", userRoutes);
-app.use("/api/dashboard", dashboardRoutes); // for user activity, vents, reflections, etc.
+app.use("/api/users", userRouter);
 
 // --- ERROR HANDLING ---
 app.use(errorMiddleware);
