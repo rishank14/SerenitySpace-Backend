@@ -17,7 +17,7 @@ const reflectionSchema = new mongoose.Schema(
          type: String,
          required: true,
          trim: true,
-         maxlength: 2000,
+         maxlength: 2500,
       },
       emotion: {
          type: String,

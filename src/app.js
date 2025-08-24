@@ -26,10 +26,12 @@ app.get("/", (req, res) => {
 // --- ROUTES IMPORT ---
 import userRouter from "./routes/user.routes.js";
 import ventRouter from "./routes/vent.routes.js";
+import reflectionRouter from "./routes/reflection.routes.js";
 
 // --- ROUTES ---
 app.use("/api/users", userRouter);
 app.use("/api/vents", ventRouter);
+app.use("/api/reflections", reflectionRouter);
 
 // --- ERROR HANDLING ---
 app.use(errorMiddleware);
