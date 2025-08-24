@@ -33,7 +33,10 @@ const updateVent = asyncHandler(async (req, res) => {
    }
 
    if ((!message || message.trim() === "") && !mood && !visibility) {
-      throw new ApiError(400, "Please provide message, mood or visibility to update");
+      throw new ApiError(
+         400,
+         "Please provide message, mood or visibility to update"
+      );
    }
 
    const vent = await Vent.findOne({ _id: ventId, user: req.user?._id });
@@ -151,12 +154,15 @@ const getUserVents = asyncHandler(async (req, res) => {
    const limit = parseInt(req.query.limit) || 15;
    const skip = (page - 1) * limit;
 
+   const { mood } = req.query;
    let filter = { user: userId };
 
    // If the requesting user is NOT the same as the target user, only show public vents
    if (String(req?.user._id) !== String(userId)) {
       filter.visibility = "public";
    }
+
+   if (mood) filter.mood = mood;
 
    const totalVents = await Vent.countDocuments(filter);
 

@@ -144,8 +144,8 @@ const getAllReflections = asyncHandler(async (req, res) => {
 
    const { emotion, tag } = req.query;
    const filter = {};
-   if (emotion) filter.emotion = emotion;
-   if (tag) filter.tags = tag.toLowerCase();
+   if (emotion) filter.emotion = emotion.toLowerCase();
+   if (tag) filter.tags = { $in: [tag.toLowerCase()] };
 
    const totalReflections = await Reflection.countDocuments(filter);
 
@@ -177,7 +177,11 @@ const getUserReflections = asyncHandler(async (req, res) => {
    const limit = parseInt(req.query.limit) || 15;
    const skip = (page - 1) * limit;
 
+   const { emotion, tag } = req.query;
    const filter = { user: userId };
+   if (emotion) filter.emotion = emotion.toLowerCase();
+   if (tag) filter.tags = { $in: [tag.toLowerCase()] };
+
    const totalReflections = await Reflection.countDocuments(filter);
 
    const reflections = await Reflection.find(filter)
