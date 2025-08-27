@@ -32,12 +32,12 @@ import chatbotRouter from "./routes/chatbot.route.js";
 import dashboardRouter from "./routes/dashboard.route.js";
 
 // --- ROUTES ---
-app.use("/api/users", userRouter);
-app.use("/api/vents", ventRouter);
-app.use("/api/reflections", reflectionRouter);
-app.use("/api/message-vault", messageVaultRouter);
-app.use("/api/chatbot", chatbotRouter);
-app.use("/api/dashboard", dashboardRouter);
+app.use("/api/v1/users", userRouter);
+app.use("/api/v1/vents", ventRouter);
+app.use("/api/v1/reflections", reflectionRouter);
+app.use("/api/v1/message-vault", messageVaultRouter);
+app.use("/api/v1/chatbot", chatbotRouter);
+app.use("/api/v1/dashboard", dashboardRouter);
 
 // --- ERROR HANDLING ---
 app.use(errorMiddleware);
