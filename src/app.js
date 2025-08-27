@@ -28,12 +28,14 @@ import userRouter from "./routes/user.routes.js";
 import ventRouter from "./routes/vent.routes.js";
 import reflectionRouter from "./routes/reflection.routes.js";
 import messageVaultRouter from "./routes/messageVault.routes.js";
+import chatbotRouter from "./routes/chatbot.route.js";
 
 // --- ROUTES ---
 app.use("/api/users", userRouter);
 app.use("/api/vents", ventRouter);
 app.use("/api/reflections", reflectionRouter);
 app.use("/api/message-vault", messageVaultRouter);
+app.use("/api/chatbot", chatbotRouter);
 
 // --- ERROR HANDLING ---
 app.use(errorMiddleware);
