@@ -53,6 +53,8 @@ const updateVent = asyncHandler(async (req, res) => {
 
    await vent.save();
 
+   await vent.populate("user", "username");
+
    return res
       .status(200)
       .json(new ApiResponse(200, vent, "Vent updated successfully"));
