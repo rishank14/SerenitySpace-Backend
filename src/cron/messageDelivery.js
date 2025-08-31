@@ -1,6 +1,6 @@
 import cron from "node-cron";
 import MessageVault from "../models/MessageVault.model.js";
-import { getIO, getUserSocket } from "../socket/socket.js";
+import { getIO } from "../socket/socket.js";
 
 export function startMessageDeliveryJob() {
    // Run every minute
@@ -14,15 +14,13 @@ export function startMessageDeliveryJob() {
 
       for (const msg of dueMessages) {
          try {
-            const socketId = getUserSocket(msg.user.toString());
-
-            if (socketId) {
-               getIO().to(socketId).emit("newMessageVault", {
-                  messageId: msg._id,
-                  message: msg.message,
-                  deliverAt: msg.deliverAt,
-               });
-            }
+            // Emit to the user's room
+            getIO().to(msg.user.toString()).emit("vaultDelivered", {
+               _id: msg._id,
+               message: msg.message,
+               deliverAt: msg.deliverAt,
+               delivered: true,
+            });
 
             msg.delivered = true;
             await msg.save();
