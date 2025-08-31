@@ -18,6 +18,8 @@ const createVent = asyncHandler(async (req, res) => {
       visibility: visibility || "private",
    });
 
+   await vent.populate("user", "username");
+
    return res
       .status(201)
       .json(new ApiResponse(201, vent, "Vent created successfully"));
