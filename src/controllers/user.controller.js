@@ -172,60 +172,73 @@ const logoutUser = asyncHandler(async (req, res) => {
 });
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
-   // get refresh token from cookies
    const incomingRefreshToken =
       req.cookies?.refreshToken || req.body?.refreshToken;
 
    if (!incomingRefreshToken) {
-      throw new ApiError(401, "Please login to access this resource");
+      throw new ApiError(401, "Refresh token missing. Please login again.");
    }
 
+   let decoded;
    try {
-      const decodedToken = jwt.verify(
+      decoded = jwt.verify(
          incomingRefreshToken,
          process.env.REFRESH_TOKEN_SECRET
       );
-
-      const user = await User.findById(decodedToken?._id);
-
-      if (!user) {
-         throw new ApiError(401, "Please login to access this resource");
-      }
-
-      if (user.refreshToken !== incomingRefreshToken) {
-         throw new ApiError(403, "Refresh token mismatch. Please login again.");
-      }
-
-      const cookieOptions = {
-         httpOnly: true,
-         secure: true,
-      };
-
-      const { accessToken, refreshToken } =
-         await generateAccessAndRefreshTokens(user._id);
-
-      return res
-         .status(200)
-         .cookie("accessToken", accessToken, {
-            ...cookieOptions,
-            expires: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
-            maxAge: 1 * 24 * 60 * 60 * 1000,
-         })
-         .cookie("refreshToken", refreshToken, {
-            ...cookieOptions,
-            expires: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
-            maxAge: 10 * 24 * 60 * 60 * 1000,
-         })
-         .json(
-            new ApiResponse(
-               200,
-               { accessToken, refreshToken },
-               "Access token refreshed successfully"
-            )
-         );
    } catch (error) {
-      throw new ApiError(401, "Please login to access this resource");
+      throw new ApiError(
+         401,
+         "Invalid or expired refresh token. Please login again."
+      );
    }
+
+   const userId = decoded?._id;
+   if (!userId) {
+      throw new ApiError(401, "Invalid token payload. Please login again.");
+   }
+
+   const user = await User.findById(userId).select("+refreshToken");
+
+   if (!user) {
+      throw new ApiError(401, "User not found. Please login again.");
+   }
+
+   if (user.refreshToken !== incomingRefreshToken) {
+      throw new ApiError(403, "Refresh token mismatch. Please login again.");
+   }
+
+   const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
+      user._id
+   );
+
+   user.refreshToken = refreshToken;
+   await user.save({ validateBeforeSave: false });
+
+   const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // true in production
+      sameSite: "none",
+   };
+
+   return res
+      .status(200)
+      .cookie("accessToken", accessToken, {
+         ...cookieOptions,
+         expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+         maxAge: 24 * 60 * 60 * 1000,
+      })
+      .cookie("refreshToken", refreshToken, {
+         ...cookieOptions,
+         expires: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
+         maxAge: 10 * 24 * 60 * 60 * 1000,
+      })
+      .json(
+         new ApiResponse(
+            200,
+            { accessToken, refreshToken },
+            "Access token refreshed successfully"
+         )
+      );
 });
 
 const changeCurrentPassword = asyncHandler(async (req, res) => {
