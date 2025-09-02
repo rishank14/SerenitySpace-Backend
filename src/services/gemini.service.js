@@ -11,14 +11,26 @@ You are not a therapist, and you do not offer medical advice.
 Avoid judgment. Be warm, gentle, and human-like. Use simple, comforting language.
 Encourage the user to reflect and express more if they are comfortable.`;
 
-export async function getGeminiChatResponse(userMessage) {
+export async function getGeminiChatResponse(userMessage, history = []) {
    try {
       const model = genAI.getGenerativeModel({
          model: "models/gemini-1.5-flash-002",
          systemInstruction: SYSTEM_PROMPT,
       });
 
-      const result = await model.generateContent(userMessage);
+      // Format full conversation context
+      const messages = history.map((msg) => ({
+         role: msg.sender === "user" ? "user" : "model",
+         parts: [{ text: msg.text }],
+      }));
+
+      // Add the latest message as the final entry
+      messages.push({
+         role: "user",
+         parts: [{ text: userMessage }],
+      });
+
+      const result = await model.generateContent({ contents: messages });
       const response = await result.response;
       const text = response.text();
 

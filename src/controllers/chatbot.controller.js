@@ -4,13 +4,13 @@ import ApiResponse from "../utils/ApiResponse.js";
 import { getGeminiChatResponse } from "../services/gemini.service.js";
 
 export const handleChatbotMessage = asyncHandler(async (req, res) => {
-   const { message } = req.body;
+   const { message, history } = req.body;
 
    if (!message || message.trim() === "") {
       throw new ApiError(400, "Message cannot be empty");
    }
 
-   const reply = await getGeminiChatResponse(message.trim());
+   const reply = await getGeminiChatResponse(message.trim(), history || []);
 
    return res
       .status(200)
