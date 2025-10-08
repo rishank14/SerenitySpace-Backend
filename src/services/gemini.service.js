@@ -14,29 +14,30 @@ Encourage the user to reflect and express more if they are comfortable.`;
 export async function getGeminiChatResponse(userMessage, history = []) {
    try {
       const model = genAI.getGenerativeModel({
-         model: "models/gemini-1.5-flash-002",
+         model: "models/gemini-2.0-flash",
          systemInstruction: SYSTEM_PROMPT,
       });
 
-      // Format full conversation context
-      const messages = history.map((msg) => ({
+      // Format conversation history
+      const formattedHistory = history.map((msg) => ({
          role: msg.sender === "user" ? "user" : "model",
-         parts: [{ text: msg.text }],
+         parts: [{ text: msg.text || "" }],
       }));
 
-      // Add the latest message as the final entry
-      messages.push({
-         role: "user",
-         parts: [{ text: userMessage }],
-      });
+      // Start a chat session with the history
+      const chat = model.startChat({ history: formattedHistory });
 
-      const result = await model.generateContent({ contents: messages });
-      const response = await result.response;
-      const text = response.text();
+      // Send the latest user message
+      const result = await chat.sendMessage(userMessage);
 
-      return text;
+      // Return the AI's text response
+      return result.response.text();
    } catch (error) {
-      console.error("Gemini Error:", error);
+      console.error("Gemini Error:", {
+         message: error?.message,
+         stack: error?.stack,
+         cause: error?.cause,
+      });
       throw new Error("Failed to get response from SerenityBot");
    }
 }
