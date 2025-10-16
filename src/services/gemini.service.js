@@ -1,3 +1,4 @@
+// services/gemini.service.js
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import dotenv from "dotenv";
 
@@ -11,33 +12,34 @@ You are not a therapist, and you do not offer medical advice.
 Avoid judgment. Be warm, gentle, and human-like. Use simple, comforting language.
 Encourage the user to reflect and express more if they are comfortable.`;
 
-export async function getGeminiChatResponse(userMessage, history = []) {
+// Persistent chat session
+let chatSession = null;
+
+export async function getGeminiChatResponse(userMessage, reset = false) {
+   if (reset) resetGeminiChat();
+
    try {
-      const model = genAI.getGenerativeModel({
-         model: "models/gemini-2.0-flash",
-         systemInstruction: SYSTEM_PROMPT,
-      });
+      if (!chatSession) {
+         const model = genAI.getGenerativeModel({
+            model: "models/gemini-2.0-flash",
+            systemInstruction: SYSTEM_PROMPT,
+         });
 
-      // Format conversation history
-      const formattedHistory = history.map((msg) => ({
-         role: msg.sender === "user" ? "user" : "model",
-         parts: [{ text: msg.text || "" }],
-      }));
+         chatSession = model.startChat({ history: [] });
+      }
 
-      // Start a chat session with the history
-      const chat = model.startChat({ history: formattedHistory });
-
-      // Send the latest user message
-      const result = await chat.sendMessage(userMessage);
-
-      // Return the AI's text response
+      const result = await chatSession.sendMessage(userMessage);
       return result.response.text();
    } catch (error) {
-      console.error("Gemini Error:", {
+      console.error("Gemini Chat Error:", {
          message: error?.message,
          stack: error?.stack,
          cause: error?.cause,
       });
       throw new Error("Failed to get response from SerenityBot");
    }
+}
+
+export function resetGeminiChat() {
+   chatSession = null;
 }
