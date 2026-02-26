@@ -21,9 +21,16 @@ const messageVaultSchema = new mongoose.Schema(
          type: Boolean,
          default: false,
       },
+      deliveredAt: {
+         type: Date,
+         default: null,
+      },
    },
    { timestamps: true }
 );
+
+messageVaultSchema.index({ deliverAt: 1, delivered: 1 });
+messageVaultSchema.index({ user: 1, delivered: 1, deliverAt: 1 });
 
 const MessageVault =
    mongoose.models.MessageVault ||

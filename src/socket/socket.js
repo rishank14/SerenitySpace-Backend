@@ -1,4 +1,5 @@
 import { Server } from "socket.io";
+import jwt from "jsonwebtoken";
 
 let io;
 
@@ -10,18 +11,26 @@ export function setupSocket(server) {
       },
    });
 
-   io.on("connection", (socket) => {
-      console.log("New socket connected:", socket.id);
+   // Authenticate on handshake using JWT
+   io.use((socket, next) => {
+      const token = socket.handshake.auth?.token;
+      if (!token) return next(new Error("Authentication required"));
+      try {
+         const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+         socket.userId = decoded._id;
+         next();
+      } catch {
+         next(new Error("Invalid or expired token"));
+      }
+   });
 
-      // Join the user to a room named by their userId
-      socket.on("register", (userId) => {
-         socket.join(userId);
-         console.log(`User ${userId} joined room ${userId}`);
-      });
+   io.on("connection", (socket) => {
+      // Auto-join authenticated user to their own room
+      socket.join(socket.userId);
+      console.log(`User ${socket.userId} connected: ${socket.id}`);
 
       socket.on("disconnect", () => {
          console.log("Socket disconnected:", socket.id);
-         // No need to track individual socket IDs
       });
    });
 }

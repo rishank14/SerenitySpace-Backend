@@ -123,7 +123,8 @@ const getAllVents = asyncHandler(async (req, res) => {
    const { mood } = req.query;
    const filter = {};
 
-   if (mood) filter.mood = mood;
+   const allowedMoods = ["sad", "angry", "anxious", "happy", "neutral"];
+   if (mood && allowedMoods.includes(String(mood))) filter.mood = String(mood);
 
    // Only fetch public vents or vents of the current user
    filter.$or = [{ visibility: "public" }, { user: req.user?._id }];
@@ -166,7 +167,9 @@ const getUserVents = asyncHandler(async (req, res) => {
       filter.visibility = "public";
    }
 
-   if (mood) filter.mood = mood;
+   const allowedMoodsUser = ["sad", "angry", "anxious", "happy", "neutral"];
+   if (mood && allowedMoodsUser.includes(String(mood)))
+      filter.mood = String(mood);
 
    const totalVents = await Vent.countDocuments(filter);
 

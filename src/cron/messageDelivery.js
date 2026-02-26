@@ -7,12 +7,15 @@ export function startMessageDeliveryJob() {
    cron.schedule("* * * * *", async () => {
       const now = new Date();
 
-      const dueMessages = await MessageVault.find({
-         deliverAt: { $lte: now },
-         delivered: false,
-      });
-
-      for (const msg of dueMessages) {
+      // Atomically find and mark as delivered one-by-one to prevent duplicates
+      let msg;
+      while (
+         (msg = await MessageVault.findOneAndUpdate(
+            { deliverAt: { $lte: now }, delivered: false },
+            { $set: { delivered: true, deliveredAt: now } },
+            { new: true }
+         ))
+      ) {
          try {
             // Emit to the user's room
             getIO().to(msg.user.toString()).emit("vaultDelivered", {
@@ -21,11 +24,8 @@ export function startMessageDeliveryJob() {
                deliverAt: msg.deliverAt,
                delivered: true,
             });
-
-            msg.delivered = true;
-            await msg.save();
          } catch (error) {
-            console.error("Error delivering message:", msg._id, error);
+            console.error("Error emitting delivered message:", msg._id, error);
          }
       }
    });

@@ -10,7 +10,11 @@ export const handleChatbotMessage = asyncHandler(async (req, res) => {
       throw new ApiError(400, "Message cannot be empty");
    }
 
-   const reply = await getGeminiChatResponse(message.trim(), reset);
+   const reply = await getGeminiChatResponse(
+      req.user._id.toString(),
+      message.trim(),
+      reset
+   );
 
    return res
       .status(200)

@@ -12,23 +12,35 @@ You are not a therapist, and you do not offer medical advice.
 Avoid judgment. Be warm, gentle, and human-like. Use simple, comforting language.
 Encourage the user to reflect and express more if they are comfortable.`;
 
-// Persistent chat session
-let chatSession = null;
+// Per-user chat sessions: userId -> { session, lastUsed }
+const sessions = new Map();
+const SESSION_TTL = 30 * 60 * 1000; // 30 minutes
 
-export async function getGeminiChatResponse(userMessage, reset = false) {
-   if (reset) resetGeminiChat();
+export async function getGeminiChatResponse(
+   userId,
+   userMessage,
+   reset = false
+) {
+   if (reset) sessions.delete(userId);
 
    try {
-      if (!chatSession) {
+      let entry = sessions.get(userId);
+
+      if (!entry) {
          const model = genAI.getGenerativeModel({
-            model: "models/gemini-2.5-flash",
+            model: "models/gemini-2.0-flash",
             systemInstruction: SYSTEM_PROMPT,
          });
 
-         chatSession = model.startChat({ history: [] });
+         entry = {
+            session: model.startChat({ history: [] }),
+            lastUsed: Date.now(),
+         };
+         sessions.set(userId, entry);
       }
 
-      const result = await chatSession.sendMessage(userMessage);
+      entry.lastUsed = Date.now();
+      const result = await entry.session.sendMessage(userMessage);
       return result.response.text();
    } catch (error) {
       console.error("Gemini Chat Error:", {
@@ -40,6 +52,13 @@ export async function getGeminiChatResponse(userMessage, reset = false) {
    }
 }
 
-export function resetGeminiChat() {
-   chatSession = null;
-}
+// Cleanup stale sessions every 10 minutes
+setInterval(
+   () => {
+      const now = Date.now();
+      for (const [id, entry] of sessions) {
+         if (now - entry.lastUsed > SESSION_TTL) sessions.delete(id);
+      }
+   },
+   10 * 60 * 1000
+);

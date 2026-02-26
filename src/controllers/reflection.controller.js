@@ -121,13 +121,14 @@ const getReflectionById = asyncHandler(async (req, res) => {
       throw new ApiError(400, "Invalid reflection ID");
    }
 
-   const reflection = await Reflection.findById(reflectionId).populate(
-      "user",
-      "username"
-   );
+   // Only allow fetching own reflections
+   const reflection = await Reflection.findOne({
+      _id: reflectionId,
+      user: req.user._id,
+   }).populate("user", "username");
 
    if (!reflection) {
-      throw new ApiError(404, "Reflection not found");
+      throw new ApiError(404, "Reflection not found or not authorized");
    }
 
    return res
@@ -143,9 +144,14 @@ const getAllReflections = asyncHandler(async (req, res) => {
    const skip = (page - 1) * limit;
 
    const { emotion, tag } = req.query;
-   const filter = {};
-   if (emotion) filter.emotion = emotion.toLowerCase();
-   if (tag) filter.tags = { $in: [tag.toLowerCase()] };
+   // Only return current user's reflections (reflections are private)
+   const filter = { user: req.user._id };
+   const allowedEmotions = ["sad", "angry", "anxious", "happy", "neutral"];
+   if (emotion && allowedEmotions.includes(String(emotion).toLowerCase())) {
+      filter.emotion = String(emotion).toLowerCase();
+   }
+   if (tag && typeof tag === "string")
+      filter.tags = { $in: [tag.toLowerCase()] };
 
    const totalReflections = await Reflection.countDocuments(filter);
 
@@ -173,14 +179,26 @@ const getUserReflections = asyncHandler(async (req, res) => {
       throw new ApiError(400, "Invalid user ID");
    }
 
+   // Only allow users to fetch their own reflections
+   if (String(req.user._id) !== String(userId)) {
+      throw new ApiError(
+         403,
+         "You are not authorized to view these reflections"
+      );
+   }
+
    const page = parseInt(req.query.page) || 1;
    const limit = parseInt(req.query.limit) || 15;
    const skip = (page - 1) * limit;
 
    const { emotion, tag } = req.query;
    const filter = { user: userId };
-   if (emotion) filter.emotion = emotion.toLowerCase();
-   if (tag) filter.tags = { $in: [tag.toLowerCase()] };
+   const allowedEmotions = ["sad", "angry", "anxious", "happy", "neutral"];
+   if (emotion && allowedEmotions.includes(String(emotion).toLowerCase())) {
+      filter.emotion = String(emotion).toLowerCase();
+   }
+   if (tag && typeof tag === "string")
+      filter.tags = { $in: [tag.toLowerCase()] };
 
    const totalReflections = await Reflection.countDocuments(filter);
 

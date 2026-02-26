@@ -49,7 +49,8 @@ const registerUser = asyncHandler(async (req, res) => {
 
    const cookieOptions = {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
    };
 
    const createdUser = await User.findById(user._id).select(
@@ -116,7 +117,8 @@ const loginUser = asyncHandler(async (req, res) => {
 
    const cookieOptions = {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
    };
 
    return res
@@ -161,7 +163,8 @@ const logoutUser = asyncHandler(async (req, res) => {
 
    const cookieOptions = {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
    };
 
    return res
@@ -329,19 +332,25 @@ const updateUserProfile = asyncHandler(async (req, res) => {
 const deleteAccount = asyncHandler(async (req, res) => {
    const userId = req.user._id;
 
-   await User.findByIdAndDelete(userId);
-
-   // Optionally delete user's content: Vents, Reflections, Messages
+   // Delete user's content first, then delete the user
    await Promise.all([
       Vent.deleteMany({ user: userId }),
       Reflection.deleteMany({ user: userId }),
       MessageVault.deleteMany({ user: userId }),
    ]);
 
+   await User.findByIdAndDelete(userId);
+
+   const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+   };
+
    return res
       .status(200)
-      .clearCookie("accessToken")
-      .clearCookie("refreshToken")
+      .clearCookie("accessToken", cookieOptions)
+      .clearCookie("refreshToken", cookieOptions)
       .json(new ApiResponse(200, {}, "User account deleted successfully"));
 });
 
