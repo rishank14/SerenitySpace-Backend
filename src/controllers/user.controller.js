@@ -62,7 +62,7 @@ const registerUser = asyncHandler(async (req, res) => {
    }
 
    return res
-      .status(200)
+      .status(201)
       .cookie("accessToken", accessToken, {
          ...cookieOptions,
          expires: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
@@ -75,7 +75,7 @@ const registerUser = asyncHandler(async (req, res) => {
       })
       .json(
          new ApiResponse(
-            200,
+            201,
             {
                user: createdUser,
                accessToken,
@@ -214,13 +214,10 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
       user._id
    );
 
-   user.refreshToken = refreshToken;
-   await user.save({ validateBeforeSave: false });
-
    const cookieOptions = {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // true in production
-      sameSite: "none",
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
    };
 
    return res
@@ -251,7 +248,7 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
       throw new ApiError(400, "Current and new passwords are required");
    }
 
-   const user = await User.findById(req.user?._id);
+   const user = await User.findById(req.user?._id).select("+password");
 
    if (!user) {
       throw new ApiError(404, "User not found");
