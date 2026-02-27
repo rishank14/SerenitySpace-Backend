@@ -28,7 +28,7 @@ export async function getGeminiChatResponse(
 
       if (!entry) {
          const model = genAI.getGenerativeModel({
-            model: "models/gemini-2.0-flash",
+            model: "models/gemini-2.5-flash",
             systemInstruction: SYSTEM_PROMPT,
          });
 
