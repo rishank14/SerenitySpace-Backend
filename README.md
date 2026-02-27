@@ -55,7 +55,7 @@ It is built for clarity, stability, and emotional impact — with real-time comm
 | Database        | MongoDB + Mongoose                                           |
 | Real-time       | Socket.IO                                                    |
 | Scheduling      | node-cron                                                    |
-| AI Integration  | Google Gemini 2.0 Flash                                      |
+| AI Integration  | Google Gemini 2.5 Flash                                      |
 | Auth & Security | JWT, bcrypt, CORS, HTTP-only cookies                         |
 | Utilities       | dotenv, cookie-parser, async-handler, ApiError / ApiResponse |
 
